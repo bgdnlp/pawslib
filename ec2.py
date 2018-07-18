@@ -5,7 +5,7 @@ import boto3
 
 
 def launch_ami_like_instance(ami_id, model_id, count=1, copy_tags={},
-        b3_session=None, **kwargs):
+                             b3_session=None, **kwargs):
     """
     Start a new instance from the specified AMI, copying the settings
     (instance type, subnet, security groups, etc.) of another instance.
@@ -36,8 +36,10 @@ def launch_ami_like_instance(ami_id, model_id, count=1, copy_tags={},
         kwargs: any additional parameters will be passed to the boto3
             function ec2.create_instances() directly. Primary use would
             probably be to specify ClientToken or PrivateIpAddress.
-            See https://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
-            and https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html
+            See https://boto3.readthedocs.io/en/latest/reference/services/
+                ec2.html#EC2.ServiceResource.create_instances
+            and https://docs.aws.amazon.com/AWSEC2/latest/APIReference/
+                Run_Instance_Idempotency.html
             The following parameters can't be used in kwargs:
                 ImageId
                 InstanceType
@@ -62,11 +64,11 @@ def launch_ami_like_instance(ami_id, model_id, count=1, copy_tags={},
     if 'SetTags' in copy_tags:
         tags_to_set = copy_tags['SetTags']
         tag_keys_to_set = [tag['Key'] for tag in copy_tags['SetTags']]
-        tags_to_copy = [tag for tag in ec2_model.tags 
+        tags_to_copy = [tag for tag in ec2_model.tags
                         if tag['Key'] not in tag_keys_to_set]
     else:
         tags_to_set = []
-        trags_to_copy = ec2_model.tags
+        tags_to_copy = ec2_model.tags
     if copy_tags['CopyTags']:
         tag_spec = [{'Tags': tags_to_copy + tags_to_set}]
     else:
@@ -79,7 +81,11 @@ def launch_ami_like_instance(ami_id, model_id, count=1, copy_tags={},
     #   InstanceMarketOptions
     #   CreditSpecification
     #   CpuOptions
-    print(tag_spec)
+    instance_role = {}
+    if ec2_model.iam_instance_profile is not None:
+        instance_role['Arn'] = ec2_model.iam_instance_profile['Arn']
+        # instance_role['Name'] = ec2_model.iam_instance_profile['Arn'][
+        #         ec2_model.iam_instance_profile['Arn'].rfind('/') + 1:]
     new_instances = ec2.create_instances(
         ImageId=ami_id,
         InstanceType=ec2_model.instance_type,
@@ -90,7 +96,7 @@ def launch_ami_like_instance(ami_id, model_id, count=1, copy_tags={},
         SecurityGroupIds=[gid['GroupId'] for gid in ec2_model.security_groups],
         SubnetId=ec2_model.subnet_id,
         EbsOptimized=ec2_model.ebs_optimized,
-        IamInstanceProfile=ec2_model.iam_instance_profile or {},
+        IamInstanceProfile=instance_role,
         TagSpecifications=tag_spec,
         **kwargs
         )
