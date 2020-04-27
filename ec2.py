@@ -4,8 +4,9 @@ from ipaddress import ip_network
 import boto3
 
 
-def launch_ami_like_instance(ami_id, model_id, count=1, copy_tags={},
-                             b3_session=None, **kwargs):
+def launch_ami_like_instance(
+    ami_id, model_id, count=1, copy_tags={}, b3_session=None, **kwargs
+):
     """
     Start a new instance from the specified AMI, copying the settings
     (instance type, subnet, security groups, etc.) of another instance.
@@ -56,24 +57,25 @@ def launch_ami_like_instance(ami_id, model_id, count=1, copy_tags={},
         list of instance IDs that are being created
     """
     if b3_session:
-        ec2 = b3_session.resource('ec2')
+        ec2 = b3_session.resource("ec2")
     else:
-        ec2 = boto3.resource('ec2')
+        ec2 = boto3.resource("ec2")
     ec2_model = ec2.Instance(model_id)
     # Copy tags
-    if 'SetTags' in copy_tags:
-        tags_to_set = copy_tags['SetTags']
-        tag_keys_to_set = [tag['Key'] for tag in copy_tags['SetTags']]
-        tags_to_copy = [tag for tag in ec2_model.tags
-                        if tag['Key'] not in tag_keys_to_set]
+    if "SetTags" in copy_tags:
+        tags_to_set = copy_tags["SetTags"]
+        tag_keys_to_set = [tag["Key"] for tag in copy_tags["SetTags"]]
+        tags_to_copy = [
+            tag for tag in ec2_model.tags if tag["Key"] not in tag_keys_to_set
+        ]
     else:
         tags_to_set = []
         tags_to_copy = ec2_model.tags
-    if copy_tags['CopyTags']:
-        tag_spec = [{'Tags': tags_to_copy + tags_to_set}]
+    if copy_tags["CopyTags"]:
+        tag_spec = [{"Tags": tags_to_copy + tags_to_set}]
     else:
-        tag_spec = [{'Tags': tags_to_set}]
-    tag_spec[0]['ResourceType'] = 'instance'
+        tag_spec = [{"Tags": tags_to_set}]
+    tag_spec[0]["ResourceType"] = "instance"
     # Not coppied, can be passed on through kwargs
     #   DisableApiTermination
     #   InstanceInitiatedShutdownBehavior
@@ -83,7 +85,7 @@ def launch_ami_like_instance(ami_id, model_id, count=1, copy_tags={},
     #   CpuOptions
     instance_role = {}
     if ec2_model.iam_instance_profile is not None:
-        instance_role['Arn'] = ec2_model.iam_instance_profile['Arn']
+        instance_role["Arn"] = ec2_model.iam_instance_profile["Arn"]
         # instance_role['Name'] = ec2_model.iam_instance_profile['Arn'][
         #         ec2_model.iam_instance_profile['Arn'].rfind('/') + 1:]
     new_instances = ec2.create_instances(
@@ -92,14 +94,14 @@ def launch_ami_like_instance(ami_id, model_id, count=1, copy_tags={},
         KeyName=ec2_model.key_pair.key_name,
         MaxCount=count,
         MinCount=count,
-        Monitoring={'Enabled': ec2_model.monitoring['State'] == 'enabled'},
-        SecurityGroupIds=[gid['GroupId'] for gid in ec2_model.security_groups],
+        Monitoring={"Enabled": ec2_model.monitoring["State"] == "enabled"},
+        SecurityGroupIds=[gid["GroupId"] for gid in ec2_model.security_groups],
         SubnetId=ec2_model.subnet_id,
         EbsOptimized=ec2_model.ebs_optimized,
         IamInstanceProfile=instance_role,
         TagSpecifications=tag_spec,
         **kwargs
-        )
+    )
     return new_instances
 
 
@@ -130,20 +132,18 @@ def split_net_across_zones(net, region, subnets=4, b3_session=None):
     """
     # Check that subnets is a power of 2
     if not (not subnets & (subnets - 1) and subnets and type(subnets) is int):
-        raise ValueError('Number of subnets must be a power of 2')
+        raise ValueError("Number of subnets must be a power of 2")
     if b3_session:
-        ec2 = b3_session.client('ec2', region_name=region)
+        ec2 = b3_session.client("ec2", region_name=region)
     else:
-        ec2 = boto3.client('ec2', region_name=region)
+        ec2 = boto3.client("ec2", region_name=region)
     azs = list()
-    for az in ec2.describe_availability_zones()['AvailabilityZones']:
-        azs.append(az['ZoneName'])
+    for az in ec2.describe_availability_zones()["AvailabilityZones"]:
+        azs.append(az["ZoneName"])
     snets = list(ip_network(net).subnets(prefixlen_diff=int(log(subnets, 2))))
     net_split = list()
     for index, subnet in enumerate(snets):
         az = azs[index % len(azs)]
-        net_split.append({
-            "cidr": subnet.with_prefixlen,
-            "az": az})
+        net_split.append({"cidr": subnet.with_prefixlen, "az": az})
 
     return net_split

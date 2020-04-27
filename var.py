@@ -17,14 +17,14 @@ def alphanum(string):
     Returns:
         string
     """
-    m = re.search('[\W_]', string)
+    m = re.search("[\W_]", string)
     while m is not None:
         if m.start() == 0:
             string = string[1:]
         elif m.start() == len(string) - 1:
             string = string[:-1]
         else:
-            string = string[:m.start()] + string[m.end():].capitalize()
-        m = re.search('[\W_]', string)
+            string = string[: m.start()] + string[m.end() :].capitalize()
+        m = re.search("[\W_]", string)
 
     return string
