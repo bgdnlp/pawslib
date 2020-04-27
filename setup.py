@@ -10,4 +10,5 @@ setup(
     description="Python Distribution Utilities",
     url="https://github.com/bgdnlp/pawslib",
     download_url="https://github.com/bgdnlp/pawslib/archive/master.zip",
+    scripts=["__init__.py", "ec2.py", "var.py"],
 )
