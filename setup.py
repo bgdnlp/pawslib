@@ -11,5 +11,5 @@ setup(
     url="https://github.com/bgdnlp/pawslib",
     download_url="https://github.com/bgdnlp/pawslib/archive/master.zip",
     packages=["pawslib"],
-    package_dir={"pawslib": "src"},
+    package_dir={"pawslib": "src/pawslib"},
 )
