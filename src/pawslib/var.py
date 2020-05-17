@@ -17,7 +17,7 @@ def alphanum(string):
     Returns:
         string
     """
-    m = re.search("[\W_]", string)
+    m = re.search(r"[\W_]", string)
     while m is not None:
         if m.start() == 0:
             string = string[1:]
@@ -25,6 +25,6 @@ def alphanum(string):
             string = string[:-1]
         else:
             string = string[: m.start()] + string[m.end() :].capitalize()
-        m = re.search("[\W_]", string)
+        m = re.search(r"[\W_]", string)
 
     return string
