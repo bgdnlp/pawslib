@@ -102,3 +102,6 @@ ENV/
 
 # VI swap files
 .*.sw?
+
+# VSCode
+.vscode

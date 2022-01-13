@@ -24,7 +24,7 @@ def alphanum(string):
         elif m.start() == len(string) - 1:
             string = string[:-1]
         else:
-            string = string[: m.start()] + string[m.end() :].capitalize()
+            string = string[: m.start()] + string[m.end() : m.end()+1].upper() + string[m.end()+1:]
         m = re.search(r"[\W_]", string)
 
     return string
